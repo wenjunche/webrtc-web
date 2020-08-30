@@ -4,13 +4,13 @@
 * Initial setup
 ****************************************************************************/
 
-// var configuration = {
-//   'iceServers': [{
-//     'urls': 'stun:stun.l.google.com:19302'
-//   }]
-// };
+var configuration = {
+  'iceServers': [{
+    'urls': 'stun:stun.l.google.com:19302'
+  }]
+};
 
-var configuration = null;
+// var configuration = null;
 
 // var roomURL = document.getElementById('url');
 var video = document.querySelector('video');
@@ -185,10 +185,7 @@ function signalingMessageCallback(message) {
                                   logError);
 
   } else if (message.type === 'candidate') {
-    peerConn.addIceCandidate(new RTCIceCandidate({
-      candidate: message.candidate
-    }));
-
+    peerConn.addIceCandidate(message.candidate);
   }
 }
 
@@ -203,9 +200,7 @@ peerConn.onicecandidate = function(event) {
   if (event.candidate) {
     sendMessage({
       type: 'candidate',
-      label: event.candidate.sdpMLineIndex,
-      id: event.candidate.sdpMid,
-      candidate: event.candidate.candidate
+      candidate: event.candidate
     });
   } else {
     console.log('End of candidates.');
@@ -251,8 +246,7 @@ function onDataChannelCreated(channel) {
     snapAndSendBtn.disabled = true;
   }
 
-  channel.onmessage = (adapter.browserDetails.browser === 'firefox') ?
-  receiveDataFirefoxFactory() : receiveDataChromeFactory();
+  channel.onmessage = receiveDataChromeFactory();
 }
 
 function receiveDataChromeFactory() {
@@ -273,51 +267,12 @@ function receiveDataChromeFactory() {
     console.log('count: ' + count);
 
     if (count === buf.byteLength) {
-// we're done: all data chunks have been received
-console.log('Done. Rendering photo.');
-renderPhoto(buf);
-}
-};
-}
-
-function receiveDataFirefoxFactory() {
-  var count, total, parts;
-
-  return function onmessage(event) {
-    if (typeof event.data === 'string') {
-      total = parseInt(event.data);
-      parts = [];
-      count = 0;
-      console.log('Expecting a total of ' + total + ' bytes');
-      return;
-    }
-
-    parts.push(event.data);
-    count += event.data.size;
-    console.log('Got ' + event.data.size + ' byte(s), ' + (total - count) +
-                ' to go.');
-
-    if (count === total) {
-      console.log('Assembling payload');
-      var buf = new Uint8ClampedArray(total);
-      var compose = function(i, pos) {
-        var reader = new FileReader();
-        reader.onload = function() {
-          buf.set(new Uint8ClampedArray(this.result), pos);
-          if (i + 1 === parts.length) {
-            console.log('Done. Rendering photo.');
-            renderPhoto(buf);
-          } else {
-            compose(i + 1, pos + this.result.byteLength);
-          }
-        };
-        reader.readAsArrayBuffer(parts[i]);
-      };
-      compose(0, 0);
+      // we're done: all data chunks have been received
+      console.log('Done. Rendering photo.');
+      renderPhoto(buf);
     }
   };
 }
-
 
 /****************************************************************************
 * Aux functions, mostly UI-related
