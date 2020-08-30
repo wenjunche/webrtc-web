@@ -13,20 +13,13 @@
 
   <h1>Realtime communication with WebRTC</h1>
 
-  <div id="videoCanvas">
-    <video id="camera" autoplay playsinline></video>
-    <canvas id="photo"></canvas>
-  </div>
-
   <div id="buttons">
-    <button id="snap">Snap</button><span> then </span><button id="send">Send</button>
-    <span> or </span>
-    <button id="snapAndSend">Snap &amp; Send</button>
+    <input type="text" id="text" name="text"><button id="send">Send</button>
   </div>
 
   <div id="incoming">
-    <h2>Incoming photos</h2>
-    <div id="trail"></div>
+    <h2>Incoming Text</h2>
+    <div id="incomingtext"></div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>

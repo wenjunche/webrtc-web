@@ -6,7 +6,8 @@
 
 var configuration = {
   'iceServers': [{
-    'urls': 'stun:stun.l.google.com:19302'
+//    'urls': 'stun:stun.l.google.com:19302'
+    'urls': 'stun:172.17.56.177:3478'
   }]
 };
 
@@ -14,24 +15,17 @@ var configuration = {
 
 // var roomURL = document.getElementById('url');
 var video = document.querySelector('video');
-var photo = document.getElementById('photo');
-var photoContext = photo.getContext('2d');
 var trail = document.getElementById('trail');
-var snapBtn = document.getElementById('snap');
 var sendBtn = document.getElementById('send');
-var snapAndSendBtn = document.getElementById('snapAndSend');
 
 var photoContextW;
 var photoContextH;
 
 // Attach event handlers
-snapBtn.addEventListener('click', snapPhoto);
 sendBtn.addEventListener('click', sendPhoto);
-snapAndSendBtn.addEventListener('click', snapAndSend);
 
 // Disable send buttons by default.
 sendBtn.disabled = true;
-snapAndSendBtn.disabled = true;
 
 // Create a random room if not already present in the URL.
 var isInitiator;
@@ -56,14 +50,14 @@ socket.on('ipaddr', function(ipaddr) {
 socket.on('created', function(room, clientId) {
   console.log('Created room', room, '- my client ID is', clientId);
   isInitiator = true;
-  grabWebCamVideo();
+//  grabWebCamVideo();
 });
 
 socket.on('joined', function(room, clientId) {
   console.log('This peer has joined room', room, 'with client ID', clientId);
   isInitiator = false;
   createPeerConnection(isInitiator, configuration);
-  grabWebCamVideo();
+//  grabWebCamVideo();
 });
 
 socket.on('full', function(room) {
@@ -97,13 +91,11 @@ if (location.hostname.match(/localhost|127\.0\.0/)) {
 socket.on('disconnect', function(reason) {
   console.log(`Disconnected: ${reason}.`);
   sendBtn.disabled = true;
-  snapAndSendBtn.disabled = true;
 });
 
 socket.on('bye', function(room) {
   console.log(`Peer leaving room ${room}.`);
   sendBtn.disabled = true;
-  snapAndSendBtn.disabled = true;
   // If peer did not create the room, re-enter to be creator.
   if (!isInitiator) {
     window.location.reload();
@@ -137,33 +129,6 @@ function sendMessage(message) {
 //   roomURL.innerHTML = url;
 // }
 
-/****************************************************************************
-* User media (webcam)
-****************************************************************************/
-
-function grabWebCamVideo() {
-  console.log('Getting user media (video) ...');
-  navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: true
-  })
-  .then(gotStream)
-  .catch(function(e) {
-    alert('getUserMedia() error: ' + e.name);
-  });
-}
-
-function gotStream(stream) {
-  console.log('getUserMedia video stream URL:', stream);
-  window.stream = stream; // stream available to console
-  video.srcObject = stream;
-  video.onloadedmetadata = function() {
-    photo.width = photoContextW = video.videoWidth;
-    photo.height = photoContextH = video.videoHeight;
-    console.log('gotStream with width and height:', photoContextW, photoContextH);
-  };
-  show(snapBtn);
-}
 
 /****************************************************************************
 * WebRTC peer connection and data channel
@@ -237,13 +202,11 @@ function onDataChannelCreated(channel) {
   channel.onopen = function() {
     console.log('CHANNEL opened!!!');
     sendBtn.disabled = false;
-    snapAndSendBtn.disabled = false;
   };
 
   channel.onclose = function () {
     console.log('Channel closed.');
     sendBtn.disabled = true;
-    snapAndSendBtn.disabled = true;
   }
 
   channel.onmessage = receiveDataChromeFactory();
@@ -254,22 +217,7 @@ function receiveDataChromeFactory() {
 
   return function onmessage(event) {
     if (typeof event.data === 'string') {
-      buf = window.buf = new Uint8ClampedArray(parseInt(event.data));
-      count = 0;
-      console.log('Expecting a total of ' + buf.byteLength + ' bytes');
-      return;
-    }
-
-    var data = new Uint8ClampedArray(event.data);
-    buf.set(data, count);
-
-    count += data.byteLength;
-    console.log('count: ' + count);
-
-    if (count === buf.byteLength) {
-      // we're done: all data chunks have been received
-      console.log('Done. Rendering photo.');
-      renderPhoto(buf);
+      renderPhoto(event.data);
     }
   };
 }
@@ -284,58 +232,26 @@ function snapPhoto() {
 }
 
 function sendPhoto() {
-// Split data channel message in chunks of this byte length.
-var CHUNK_LEN = 64000;
-console.log('width and height ', photoContextW, photoContextH);
-var img = photoContext.getImageData(0, 0, photoContextW, photoContextH),
-len = img.data.byteLength,
-n = len / CHUNK_LEN | 0;
+  // Split data channel message in chunks of this byte length.
+  const text = document.getElementById('text').value;
+  console.log('Sending a total of ' + text.length + ' byte(s)');
 
-console.log('Sending a total of ' + len + ' byte(s)');
+  if (!dataChannel) {
+    logError('Connection has not been initiated. ' +
+      'Get two peers in the same room first');
+    return;
+  } else if (dataChannel.readyState === 'closed') {
+    logError('Connection was lost. Peer closed the connection.');
+    return;
+  }
 
-if (!dataChannel) {
-  logError('Connection has not been initiated. ' +
-    'Get two peers in the same room first');
-  return;
-} else if (dataChannel.readyState === 'closed') {
-  logError('Connection was lost. Peer closed the connection.');
-  return;
+  dataChannel.send(text);
 }
 
-dataChannel.send(len);
-
-// split the photo and send in chunks of about 64KB
-for (var i = 0; i < n; i++) {
-  var start = i * CHUNK_LEN,
-  end = (i + 1) * CHUNK_LEN;
-  console.log(start + ' - ' + (end - 1));
-  dataChannel.send(img.data.subarray(start, end));
-}
-
-// send the reminder, if any
-if (len % CHUNK_LEN) {
-  console.log('last ' + len % CHUNK_LEN + ' byte(s)');
-  dataChannel.send(img.data.subarray(n * CHUNK_LEN));
-}
-}
-
-function snapAndSend() {
-  snapPhoto();
-  sendPhoto();
-}
 
 function renderPhoto(data) {
-  var canvas = document.createElement('canvas');
-  canvas.width = photoContextW;
-  canvas.height = photoContextH;
-  canvas.classList.add('incomingPhoto');
-  // trail is the element holding the incoming images
-  trail.insertBefore(canvas, trail.firstChild);
-
-  var context = canvas.getContext('2d');
-  var img = context.createImageData(photoContextW, photoContextH);
-  img.data.set(data);
-  context.putImageData(img, 0, 0);
+  const incoming = document.getElementById('incomingtext');
+  incoming.innerText = data;
 }
 
 function show() {
