@@ -191,8 +191,12 @@ if (isInitiator) {
 function onLocalSessionCreated(desc) {
   console.log('local session created:', desc);
   peerConn.setLocalDescription(desc, function() {
-    console.log('sending local desc:', peerConn.localDescription);
-    sendMessage(peerConn.localDescription);
+    if (desc) {
+      console.log('sending local desc:', peerConn.localDescription);
+      sendMessage(peerConn.localDescription);
+    } else {
+      console.warn('null local desc received');
+    }
   }, logError);
 }
 
