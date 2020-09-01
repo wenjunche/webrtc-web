@@ -10,7 +10,12 @@ const http = require('http').createServer(app)
 app.get("/app.json", (req, res) => {
   const appjson = require('./appjson').appjson;
   let protocol = req.get("X-Forwarded-Proto") || req.protocol;
-  appjson.startup_app.url = `${protocol}://${req.get("host")}/index.html`;
+  let room = "openfin";
+  if (req.query.room) {
+    openfin = req.query.room;
+  }
+
+  appjson.startup_app.url = `${protocol}://${req.get("host")}/index.html#${room}`;
   res.json(appjson)
 });
 
