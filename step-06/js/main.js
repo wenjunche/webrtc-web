@@ -156,37 +156,42 @@ function signalingMessageCallback(message) {
 }
 
 function createPeerConnection(isInitiator, config) {
+  if (peerConn) {
+    console.log('Skipping creating Peer connection as initiator?', isInitiator, 'config:',
+    config);
+    return;
+  }
   console.log('Creating Peer connection as initiator?', isInitiator, 'config:',
               config);
   peerConn = new RTCPeerConnection(config);
 
-// send any ice candidates to the other peer
-peerConn.onicecandidate = function(event) {
-  console.log('icecandidate event:', event);
-  if (event.candidate) {
-    sendMessage({
-      type: 'candidate',
-      candidate: event.candidate
-    });
-  } else {
-    console.log('End of candidates.');
-  }
-};
-
-if (isInitiator) {
-  console.log('Creating Data Channel');
-  dataChannel = peerConn.createDataChannel('photos');
-  onDataChannelCreated(dataChannel);
-
-  console.log('Creating an offer');
-  peerConn.createOffer(onLocalSessionCreated, logError);
-} else {
-  peerConn.ondatachannel = function(event) {
-    console.log('ondatachannel:', event.channel);
-    dataChannel = event.channel;
-    onDataChannelCreated(dataChannel);
+  // send any ice candidates to the other peer
+  peerConn.onicecandidate = function(event) {
+    console.log('icecandidate event:', event);
+    if (event.candidate) {
+      sendMessage({
+        type: 'candidate',
+        candidate: event.candidate
+      });
+    } else {
+      console.log('End of candidates.');
+    }
   };
-}
+
+  if (isInitiator) {
+    console.log('Creating Data Channel');
+    dataChannel = peerConn.createDataChannel('photos');
+    onDataChannelCreated(dataChannel);
+
+    console.log('Creating an offer');
+    peerConn.createOffer(onLocalSessionCreated, logError);
+  } else {
+    peerConn.ondatachannel = function(event) {
+      console.log('ondatachannel:', event.channel);
+      dataChannel = event.channel;
+      onDataChannelCreated(dataChannel);
+    };
+  }
 }
 
 function onLocalSessionCreated(desc) {
