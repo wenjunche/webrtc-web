@@ -77,6 +77,6 @@ io.sockets.on('connection', function(socket) {
   });
 });
 
-http.listen(8080, () => {
-  console.log('listening on *:8080');
+http.listen(8800, () => {
+  console.log('listening on *:8800');
 });
