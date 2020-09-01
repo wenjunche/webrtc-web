@@ -8,7 +8,7 @@ var configuration = {
   'iceServers': [{
 //    'urls': 'stun:stun.l.google.com:19302'
 //    'urls': 'stun:172.17.56.177:3478'
-    'urls': 'stun:ec2-184-73-206-74.compute-1.amazonaws.com:3478'
+    'urls': 'stun:webrtc-stund-dev.openfin.co:3478'
   }]
 };
 

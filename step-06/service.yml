@@ -1,0 +1,28 @@
+dev:
+  cpu: 256
+  mem: 512
+  minimumPercentOfInstances: 100
+  maximumPercentOfInstances: 200
+  instances: 1
+  policyFile: "dev.taskrole.json"
+
+staging:
+  cpu: 256
+  mem: 512
+  minimumPercentOfInstances: 100
+  maximumPercentOfInstances: 200
+  instances: 1
+  policyFile: "dev.taskrole.json"
+
+prod:
+  cpu: 256
+  mem: 512
+  minimumPercentOfInstances: 100
+  maximumPercentOfInstances: 200
+  instances: 1
+  policyFile: "dev.taskrole.json"
+
+port: 8080
+protocol: TCP
+healthPort: 8080
+launchType: FARGATE
