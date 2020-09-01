@@ -1,16 +1,23 @@
 'use strict';
 
-var os = require('os');
-var nodeStatic = require('node-static');
-var http = require('http');
-var socketIO = require('socket.io');
+const os = require('os');
+const express = require("express");
+const socketIO = require('socket.io');
 
-var fileServer = new(nodeStatic.Server)({cache: 0});
-var app = http.createServer(function(req, res) {
-  fileServer.serve(req, res);
-}).listen(8080);
+const app = express();
+const http = require('http').createServer(app)
 
-var io = socketIO.listen(app);
+app.get("/app.json", (req, res) => {
+  const appjson = require('./appjson').appjson;
+  console.log(appjson);
+  let protocol = req.get("X-Forwarded-Proto") || req.protocol;
+  appjson.startup_app.url = `${protocol}://${req.get("host")}/index.html`;
+  res.json(appjson)
+});
+
+app.use("/", express.static("."));
+
+var io = socketIO(http);
 io.sockets.on('connection', function(socket) {
 
   // convenience function to log server messages on the client
@@ -68,4 +75,8 @@ io.sockets.on('connection', function(socket) {
   socket.on('bye', function(room) {
     console.log(`Peer said bye on room ${room}.`);
   });
+});
+
+http.listen(8080, () => {
+  console.log('listening on *:8080');
 });
