@@ -9,7 +9,6 @@ const http = require('http').createServer(app)
 
 app.get("/app.json", (req, res) => {
   const appjson = require('./appjson').appjson;
-  console.log(appjson);
   let protocol = req.get("X-Forwarded-Proto") || req.protocol;
   appjson.startup_app.url = `${protocol}://${req.get("host")}/index.html`;
   res.json(appjson)
