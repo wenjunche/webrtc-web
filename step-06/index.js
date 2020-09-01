@@ -9,7 +9,7 @@ const http = require('http').createServer(app)
 
 app.get("/app.json", (req, res) => {
   const appjson = require('./appjson').appjson;
-  let protocol = req.get("X-Forwarded-Proto") || req.protocol;
+  let protocol = req.hostname === 'localhost' ? 'http' : 'https';
   let room = "openfin";
   if (req.query.room) {
     room = req.query.room;
