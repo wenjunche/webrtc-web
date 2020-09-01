@@ -12,7 +12,7 @@ app.get("/app.json", (req, res) => {
   let protocol = req.get("X-Forwarded-Proto") || req.protocol;
   let room = "openfin";
   if (req.query.room) {
-    openfin = req.query.room;
+    room = req.query.room;
   }
 
   appjson.startup_app.url = `${protocol}://${req.get("host")}/index.html#${room}`;
