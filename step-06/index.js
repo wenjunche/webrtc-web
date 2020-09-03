@@ -9,6 +9,8 @@ const socketIO = require('socket.io');
 const app = express();
 const http = require('http').createServer(app)
 
+app.set('trust proxy', 1) ;
+
 app.use(cors({origin: "https://cdn.openfin.co", credentials: true}));
 
 app.use(
