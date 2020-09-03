@@ -2,10 +2,23 @@
 
 const os = require('os');
 const express = require("express");
+const session = require("express-session");
+const cors = require("cors");
 const socketIO = require('socket.io');
 
 const app = express();
 const http = require('http').createServer(app)
+
+app.use(cors({origin: "https://cdn.openfin.co", credentials: true}));
+
+app.use(
+  session({
+    resave: true,
+    saveUninitialized: true,
+    secret: "OpenFinWebRtc",
+    cookie: { secure: true, sameSite: "none" }
+  })
+);
 
 app.get("/app.json", (req, res) => {
   const appjson = require('./appjson').appjson;
